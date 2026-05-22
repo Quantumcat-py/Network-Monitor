@@ -11,12 +11,13 @@ ip_counter = defaultdict(int)
 def get_ip(line):
     parts = line.split()
     for p in parts:
-        if ":" in p and any(c.isdigit() for c in p):
+        if "." in p:
             return p.split(":")[0]
     return None
 
 while True:
-    output = set(os.popen("ss -tun").read().splitlines())
+    output = set(os.popen("ss -tun -H").read().splitlines())
+
     new = output - prev
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -32,11 +33,7 @@ while True:
             if ip:
                 ip_counter[ip] += 1
 
-                # basic classification
-                if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("127."):
-                    tag = "LOCAL"
-                else:
-                    tag = "EXTERNAL"
+                tag = "LOCAL" if ip.startswith(("10.", "192.168.", "127.")) else "EXTERNAL"
 
                 print(f"[NEW] [{tag}] {ip} -> {line}")
 
