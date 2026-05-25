@@ -11,13 +11,15 @@ ip_counter = defaultdict(int)
 def get_ip(line):
     parts = line.split()
     for p in parts:
-        if "." in p:
+        if "." in p and any(c.isdigit() for c in p):
             return p.split(":")[0]
     return None
 
 while True:
-    output = set(os.popen("ss -tun -H").read().splitlines())
+    output = set(os.popen("ss -tun").read().splitlines()
 
+    output = set(output[1:])
+    
     new = output - prev
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -33,12 +35,16 @@ while True:
             if ip:
                 ip_counter[ip] += 1
 
-                tag = "LOCAL" if ip.startswith(("10.", "192.168.", "127.")) else "EXTERNAL"
+               if ip.startswith(("10.", "192.168.", "127.")):
+                    tag = "LOCAL"
+                else:
+                    tag = "EXTERNAL"
 
-                print(f"[NEW] [{tag}] {ip} -> {line}")
+                print(f"[NEW] [{tag}] {ip}")
+                print(f"      {line}")
 
                 with open(LOG_FILE, "a") as f:
-                    f.write(f"[{timestamp}] [{tag}] {ip} :: {line}\n")
+                    f.write(f"{timestamp} | {tag} | {ip} | {line}\n")
 
     else:
         print("No new connections detected.")
